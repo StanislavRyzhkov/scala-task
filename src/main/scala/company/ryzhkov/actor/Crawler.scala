@@ -32,32 +32,32 @@ class Crawler extends Actor {
 
   override def receive: Receive = {
     case Query(urls) =>
-      val futureTaskList = urls.map(handleError)
+      val futureTaskList = urls.map(processUrlWithErrorHandle)
       val result         = Future
         .sequence(futureTaskList)
         .map(_.partition(_.isLeft))
-        .map(e => bar(e._1, e._2))
+        .map(parseResults => splitToResult(parseResults._1, parseResults._2))
 
       result.pipeTo(sender())
     case _           =>
       sender() ! Error
   }
 
-  def processUrl(url: String): Future[String] =
+  def processUrlToHtml(url: String): Future[String] =
     for {
       httpResponse <- http.singleRequest(HttpRequest(uri = url))
-      html         <- httpResponse.entity.toStrict(4.seconds).map(_.data.utf8String)
+      html         <- httpResponse.entity.toStrict(5.seconds).map(_.data.utf8String)
     } yield html
 
-  def parseXml(string: String): String = Jsoup.parse(string).title()
+  def parseHtml(string: String): String = Jsoup.parse(string).title()
 
-  def handleError(url: String): Future[Either[String, String]] =
-    processUrl(url)
-      .map(parseXml)
+  def processUrlWithErrorHandle(url: String): Future[ParseResult] =
+    processUrlToHtml(url)
+      .map(parseHtml)
       .map(Right(_))
       .recover { case e => Left(e.getMessage) }
 
-  def bar(tuple: (ParseResults, ParseResults)): Result = {
+  def splitToResult(tuple: (ParseResults, ParseResults)): Result = {
     val errors  = for (Left(i) <- tuple._1) yield i
     val results = for (Right(i) <- tuple._2) yield i
     Result(errors, results)

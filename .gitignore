@@ -30,3 +30,6 @@ build
 
 #general
 *.class
+
+example.json
+empty.json

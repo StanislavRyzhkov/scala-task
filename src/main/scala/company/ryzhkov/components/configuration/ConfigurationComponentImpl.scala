@@ -1,4 +1,4 @@
-package company.ryzhkov.components
+package company.ryzhkov.components.configuration
 
 import akka.actor.ActorSystem
 
