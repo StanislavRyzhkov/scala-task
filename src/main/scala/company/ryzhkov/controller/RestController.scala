@@ -28,8 +28,8 @@ class RestController(system: ActorSystem)(implicit ex: ExecutionContext) {
           onComplete((crawler ? query).mapTo[Reply]) {
             case Success(value)     =>
               value match {
-                case r: Crawler.Result => complete(r)
-                case _: Crawler.Error  => complete("Bad request")
+                case result: Crawler.Result => complete(result)
+                case _: Crawler.Error       => complete(400, "Bad request")
               }
             case Failure(exception) => complete(exception.getMessage)
           }
