@@ -5,6 +5,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.{Http, HttpExt}
 import akka.pattern.pipe
 import akka.stream.{Materializer, SystemMaterializer}
+import org.jsoup.Jsoup
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -31,8 +32,9 @@ class Crawler extends Actor {
 
   override def receive: Receive = {
     case Query(urls) =>
-      val result = Future
-        .sequence(urls.map(handleError))
+      val futureTaskList = urls.map(handleError)
+      val result         = Future
+        .sequence(futureTaskList)
         .map(_.partition(_.isLeft))
         .map(e => bar(e._1, e._2))
 
@@ -47,9 +49,7 @@ class Crawler extends Actor {
       html         <- httpResponse.entity.toStrict(4.seconds).map(_.data.utf8String)
     } yield html
 
-  def parseXml(string: String): String = {
-    string.substring(0, 30)
-  }
+  def parseXml(string: String): String = Jsoup.parse(string).title()
 
   def handleError(url: String): Future[Either[String, String]] =
     processUrl(url)

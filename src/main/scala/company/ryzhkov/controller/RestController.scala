@@ -16,7 +16,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 class RestController(system: ActorSystem)(implicit ex: ExecutionContext) {
-  implicit val timeout: Timeout                      = 20.seconds
+  implicit val timeout: Timeout                      = 25.seconds
   implicit val messageFormat: RootJsonFormat[Result] = jsonFormat2(Result)
   val crawler: ActorRef                              = system.actorOf(Props[Crawler], "crawler")
 
@@ -25,7 +25,19 @@ class RestController(system: ActorSystem)(implicit ex: ExecutionContext) {
       get {
 
         val msg =
-          (crawler ? Query(List("https://www.kommersant.ru/", "https://www.rbc.ru", "http://www.ryzhkov.company")))
+          (crawler ? Query(
+            List(
+              "https://www.kommersant.ru/",
+              "https://www.geekbrains.ru",
+              "https://www.rbc.ru",
+              "https://www.twitter.com",
+              "https://www.google.com",
+              "https://www.yandex.ru",
+              "https://www.baeldung.com",
+              "https://www.forbes.ru/",
+              "123"
+            )
+          ))
             .mapTo[Reply]
 
         onComplete(msg) {
