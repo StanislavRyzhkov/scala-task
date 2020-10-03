@@ -16,38 +16,23 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 class RestController(system: ActorSystem)(implicit ex: ExecutionContext) {
-  implicit val timeout: Timeout                      = 25.seconds
-  implicit val messageFormat: RootJsonFormat[Result] = jsonFormat2(Result)
-  val crawler: ActorRef                              = system.actorOf(Props[Crawler], "crawler")
+  implicit val timeout: Timeout                     = 15.seconds
+  implicit val queryFormat: RootJsonFormat[Query]   = jsonFormat1(Query)
+  implicit val resultFormat: RootJsonFormat[Result] = jsonFormat2(Result)
+  val crawler: ActorRef                             = system.actorOf(Props[Crawler], "crawler")
 
   val route: Route = pathPrefix("api" / "create") {
     pathEndOrSingleSlash {
-      get {
-
-        val msg =
-          (crawler ? Query(
-            List(
-              "https://www.kommersant.ru/",
-              "https://www.geekbrains.ru",
-              "https://www.rbc.ru",
-              "https://www.twitter.com",
-              "https://www.google.com",
-              "https://www.yandex.ru",
-              "https://www.baeldung.com",
-              "https://www.forbes.ru/",
-              "123"
-            )
-          ))
-            .mapTo[Reply]
-
-        onComplete(msg) {
-          case Success(value)     =>
-            value match {
-              case r: Crawler.Result => complete(r)
-              case _: Crawler.Error  => complete("Bad request")
-            }
-          case Failure(exception) =>
-            complete(exception.getMessage)
+      post {
+        entity(as[Query]) { query =>
+          onComplete((crawler ? query).mapTo[Reply]) {
+            case Success(value)     =>
+              value match {
+                case r: Crawler.Result => complete(r)
+                case _: Crawler.Error  => complete("Bad request")
+              }
+            case Failure(exception) => complete(exception.getMessage)
+          }
         }
       }
     }
