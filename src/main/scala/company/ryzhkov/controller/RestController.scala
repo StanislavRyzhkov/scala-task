@@ -21,7 +21,7 @@ class RestController(system: ActorSystem)(implicit ex: ExecutionContext) {
   implicit val resultFormat: RootJsonFormat[Result] = jsonFormat2(Result)
   val crawler: ActorRef                             = system.actorOf(Props[Crawler], "crawler")
 
-  val route: Route = pathPrefix("api" / "create") {
+  val route: Route = pathPrefix("api" / "titles") {
     pathEndOrSingleSlash {
       post {
         entity(as[Query]) { query =>
