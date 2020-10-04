@@ -43,21 +43,21 @@ class Crawler extends Actor {
       sender() ! Error
   }
 
-  def processUrlToHtml(url: String): Future[String] =
+  private def processUrlToHtml(url: String): Future[String] =
     for {
       httpResponse <- http.singleRequest(HttpRequest(uri = url))
       html         <- httpResponse.entity.toStrict(5.seconds).map(_.data.utf8String)
     } yield html
 
-  def parseHtml(string: String): String = Jsoup.parse(string).title()
+  private def parseHtml(string: String): String = Jsoup.parse(string).title()
 
-  def processUrlWithErrorHandle(url: String): Future[ParseResult] =
+  private def processUrlWithErrorHandle(url: String): Future[ParseResult] =
     processUrlToHtml(url)
       .map(parseHtml)
       .map(Right(_))
       .recover { case e => Left(e.getMessage) }
 
-  def splitToResult(tuple: (ParseResults, ParseResults)): Result = {
+  private def splitToResult(tuple: (ParseResults, ParseResults)): Result = {
     val errors  = for (Left(i) <- tuple._1) yield i
     val results = for (Right(i) <- tuple._2) yield i
     Result(errors, results)
