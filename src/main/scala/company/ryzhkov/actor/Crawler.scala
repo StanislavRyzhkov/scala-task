@@ -36,7 +36,7 @@ class Crawler extends Actor {
       val result         = Future
         .sequence(futureTaskList)
         .map(_.partition(_.isLeft))
-        .map(parseResults => splitToResult(parseResults._1, parseResults._2))
+        .map(splitToResult)
 
       result.pipeTo(sender())
     case _           =>
